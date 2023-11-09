@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Uploader</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      text-align: center;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    #container {
+      border: 2px solid #3498db;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 400px;
+      width: 100%;
+      box-sizing: border-box;
+      background-color: #fff;
+    }
+
+    #drop-area {
+      border: 2px dashed #3498db;
+      border-radius: 8px;
+      padding: 20px;
+      transition: border-color 0.3s;
+      position: relative;
+    }
+
+    #file-info {
+      display: none;
+      font-size: 14px;
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    #upload-btn {
+      background-color: #ff8c00;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 20px;
+    }
+
+    #upload-btn:hover {
+      background-color: #ff6f00;
+    }
+
+    #progress-container {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      text-align: left;
+    }
+
+    #progress-bar {
+      width: 0;
+      height: 10px;
+      background-color: #2ecc71;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="container">
+    <div id="drop-area" ondragover="allowDrop(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
+      <p>Drag and Drop files here</p>
+      <p>or</p>
+      <input type="file" id="file-input" onchange="handleFiles()" multiple>
+
+      <div id="file-info">
+        <ul id="file-list"></ul>
+        <div id="progress-container">
+          <div id="progress-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <button id="upload-btn" onclick="uploadFiles()">Upload</button>
+  </div>
+
+  <script>
+let droppedFiles = [];
+
+function allowDrop(event) {
+    event.preventDefault();
+    document.getElementById('drop-area').classList.add('dragover');
+}
+
+function handleDragLeave(event) {
+    event.preventDefault();
+    document.getElementById('drop-area').classList.remove('dragover');
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    document.getElementById('drop-area').classList.remove('dragover');
+
+    const files = event.dataTransfer.files;
+
+    if (files.length > 0) {
+        droppedFiles = Array.from(files); // Save dropped files to the global variable
+        handleFiles(files);
+    }
+}
+
+
+    function handleFiles(files) {
+        const fileList = document.getElementById('file-list');
+        fileList.innerHTML = '';
+
+        for (const file of files) {
+            const listItem = document.createElement('li');
+            listItem.innerText = file.name;
+            fileList.appendChild(listItem);
+        }
+
+        document.getElementById('file-info').style.display = 'block';
+    }
+
+    function uploadFiles() {
+    const fileInput = document.getElementById('file-input');
+    const files = fileInput.files.length > 0 ? fileInput.files : droppedFiles;
+
+    if (files.length > 0) {
+        handleFiles(files);
+
+        const xhr = new XMLHttpRequest();
+        const progressBar = document.getElementById('progress-bar');
+
+        xhr.upload.addEventListener('progress', function (e) {
+            const percentage = (e.loaded / e.total) * 100;
+            progressBar.style.width = percentage + '%';
+        });
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    alert('Files uploaded successfully!');
+                    resetUpload();
+                } else {
+                    alert('Error uploading files');
+                }
+            }
+        };
+
+        xhr.open('POST', '/upload', true);
+        const formData = new FormData();
+
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files[]', files[i]);
+        }
+
+        xhr.send(formData);
+    } else {
+        alert('Please select files to upload');
+    }
+}
+
+    function resetUpload() {
+        document.getElementById('file-input').value = '';
+        document.getElementById('file-info').style.display = 'none';
+        document.getElementById('progress-bar').style.width = '0';
+    }
+
+    document.getElementById('drop-area').addEventListener('drop', handleDrop);
+    document.getElementById('drop-area').addEventListener('dragenter', allowDrop);
+    document.getElementById('drop-area').addEventListener('dragover', allowDrop);
+    document.getElementById('drop-area').addEventListener('dragleave', handleDragLeave);
+</script>
+
+
+
+</body>
+
+</html>
